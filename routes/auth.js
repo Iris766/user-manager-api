@@ -1,10 +1,12 @@
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // modles
 const User = require('../models/User');
+const varifyToken = require('./varifyToken');
 // get all users
-router.get('/users', async (req, res) => {
+router.get('/users', varifyToken, async (req, res) => {
   try {
     const users = await User.find();
     res.status(200).json(users);
@@ -46,7 +48,11 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ message: 'Invalid Password' });
   }
 
-  res.status(200).json({ message: 'User Found Successfully', user });
+  // create and assign a token
+  const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY);
+  res.header('auth-token', token);
+
+  res.status(200).json({ message: 'Loged in Successfully', token, user });
 });
 
 module.exports = router;
